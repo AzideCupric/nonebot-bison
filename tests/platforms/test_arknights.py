@@ -1,6 +1,6 @@
 import pytest
 import respx
-from httpx import Response
+from httpx import AsyncClient, Response
 from nonebug.app import App
 
 from .utils import get_file, get_json
@@ -9,8 +9,9 @@ from .utils import get_file, get_json
 @pytest.fixture
 def arknights(app: App):
     from nonebot_bison.platform import platform_manager
+    from nonebot_bison.utils import ProcessContext
 
-    return platform_manager["arknights"]
+    return platform_manager["arknights"](ProcessContext(), AsyncClient())
 
 
 @pytest.fixture(scope="module")
