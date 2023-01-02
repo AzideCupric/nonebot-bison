@@ -9,8 +9,14 @@ from nonebot.plugin import require
 from ..plugin_config import plugin_config
 from ..post import Post
 from ..types import Category, RawPost, Target
-from ..utils import scheduler
+from ..utils import SchedulerConfig, http_client
 from .platform import CategoryNotSupport, NewMessage
+
+
+class McbbsnewsSchedConf(SchedulerConfig):
+    name = "mcbbsnews"
+    schedule_type = "interval"
+    schedule_setting = {"minutes": 30}
 
 
 class McbbsNews(NewMessage):
@@ -26,7 +32,7 @@ class McbbsNews(NewMessage):
     name: str = "MCBBS幻翼块讯"
     enabled: bool = True
     is_common: bool = False
-    scheduler = scheduler("interval", {"minutes": 30})
+    scheduler = McbbsnewsSchedConf
     has_target: bool = False
 
     @classmethod
@@ -36,13 +42,10 @@ class McbbsNews(NewMessage):
     async def get_sub_list(self, _: Target) -> list[RawPost]:
         url: str = "https://www.mcbbs.net/forum-news-1.html"
 
-        async with AsyncClient() as client:
-            html = await client.get(url, headers={"User-Agent": plugin_config.bison_ua})
-            soup = BeautifulSoup(html.text, "html.parser")
-            raw_post_list = soup.find_all(
-                "tbody", id=re.compile(r"normalthread_[0-9]*")
-            )
-            post_list = self._gen_post_list(raw_post_list)
+        html = await self.client.get(url)
+        soup = BeautifulSoup(html.text, "html.parser")
+        raw_post_list = soup.find_all("tbody", id=re.compile(r"normalthread_[0-9]*"))
+        post_list = self._gen_post_list(raw_post_list)
 
         return post_list
 
@@ -128,12 +131,9 @@ class McbbsNews(NewMessage):
             raise CategoryNotSupport("McbbsNews订阅暂不支持 `{}".format(post["category"]))
 
         post_url = "https://www.mcbbs.net/{}".format(post["url"])
-
-        async with AsyncClient() as client:
-            html = await client.get(
-                post_url, headers={"User-Agent": plugin_config.bison_ua}
-            )
-            assert html.status_code == 200
+        async with http_client() as client:
+            html = await client.get(post_url)
+            html.raise_for_status()
 
         soup = BeautifulSoup(html.text, "html.parser")
         post_body = soup.find("td", id=re.compile(r"postmessage_[0-9]*"))
@@ -147,7 +147,7 @@ class McbbsNews(NewMessage):
             self.name,
             text="{}\n│\n└由 {} 发表".format(post["title"], post["author"]),
             url=post_url,
-            pics=pics,  # type: ignore
+            pics=list(pics),
             target_name=post["category"],
         )
 

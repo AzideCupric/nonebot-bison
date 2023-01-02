@@ -25,10 +25,11 @@ def gen_iamge(post, name):
     from PIL import Image
 
     a = Image.open(io.BytesIO(post.pics[0]))
-    a.save(name, format="PNG")
+    a.show(name)
 
 
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_javanews_parser(mcbbsnews, raw_post_list):
     javanews_mock = respx.get("https://www.mcbbs.net/thread-1338607-1-1.html")
@@ -45,6 +46,7 @@ async def test_javanews_parser(mcbbsnews, raw_post_list):
 
 @pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_bedrocknews_parser(mcbbsnews, raw_post_list, bedrocknews_post):
     bedrocknews_mock = respx.get("https://www.mcbbs.net/thread-1338592-1-1.html")
@@ -61,6 +63,7 @@ async def test_bedrocknews_parser(mcbbsnews, raw_post_list, bedrocknews_post):
 
 @pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_bedrock_express_parser(mcbbsnews, raw_post_list):
     bedrock_express_mock = respx.get("https://www.mcbbs.net/thread-1332424-1-1.html")
@@ -76,6 +79,7 @@ async def test_bedrock_express_parser(mcbbsnews, raw_post_list):
 
 @pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_java_express_parser(mcbbsnews, raw_post_list):
     java_express_mock = respx.get("https://www.mcbbs.net/thread-1340080-1-1.html")
@@ -91,6 +95,7 @@ async def test_java_express_parser(mcbbsnews, raw_post_list):
 
 @pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_merch_parser(mcbbsnews, raw_post_list):
     mc_merch_mock = respx.get("https://www.mcbbs.net/thread-1342236-1-1.html")
@@ -103,6 +108,7 @@ async def test_merch_parser(mcbbsnews, raw_post_list):
 
 
 @pytest.mark.asyncio
+@pytest.mark.render
 @respx.mock
 async def test_fetch_new(mcbbsnews, dummy_user_subinfo):
     news_router = respx.get("https://www.mcbbs.net/forum-news-1.html")
