@@ -44,7 +44,6 @@ async def test_javanews_parser(mcbbsnews, raw_post_list):
     assert len(post.pics) == 1
 
 
-@pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
 @pytest.mark.render
 @respx.mock
@@ -61,7 +60,6 @@ async def test_bedrocknews_parser(mcbbsnews, raw_post_list, bedrocknews_post):
     assert len(post.pics) == 1
 
 
-@pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
 @pytest.mark.render
 @respx.mock
@@ -77,7 +75,6 @@ async def test_bedrock_express_parser(mcbbsnews, raw_post_list):
     assert post.text == "{}\n│\n└由 {} 发表".format(raw_post["title"], raw_post["author"])
 
 
-@pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
 @pytest.mark.render
 @respx.mock
@@ -93,7 +90,6 @@ async def test_java_express_parser(mcbbsnews, raw_post_list):
     assert post.text == "{}\n│\n└由 {} 发表".format(raw_post["title"], raw_post["author"])
 
 
-@pytest.mark.skip("图片生成时间过长，故跳过")
 @pytest.mark.asyncio
 @pytest.mark.render
 @respx.mock
