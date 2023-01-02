@@ -170,13 +170,11 @@ class McbbsNews(NewMessage):
                 device_scale_factor=3,
             )
             assert pic_data
-        except AssertionError:
-            err_pic0 = await text_to_pic("警告：")
-            err_pic1 = await text_to_pic("图片数据为空！无法生成图片")
-            return [err_pic0, err_pic1]
         except:
-            err_pic0 = await text_to_pic("警告：")
-            err_pic1 = await text_to_pic("图片渲染失败")
+            import traceback
+
+            err_pic0 = await text_to_pic("错误发生！")
+            err_pic1 = await text_to_pic(traceback.format_exc())
             return [err_pic0, err_pic1]
         else:
             return [pic_data]

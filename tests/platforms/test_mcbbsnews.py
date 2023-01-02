@@ -19,15 +19,6 @@ def raw_post_list():
     return get_json("mcbbsnews/mcbbsnews_raw_post_list.json")
 
 
-def gen_iamge(post, name):
-    import io
-
-    from PIL import Image
-
-    a = Image.open(io.BytesIO(post.pics[0]))
-    a.show(name)
-
-
 @pytest.mark.asyncio
 @pytest.mark.render
 @respx.mock
@@ -135,4 +126,27 @@ async def test_fetch_new(mcbbsnews, dummy_user_subinfo):
     assert post.text == "Minecraft Java版 1.19-pre1 发布\n│\n└由 希铁石z 发表"
     assert post.url == "https://www.mcbbs.net/thread-1340927-1-1.html"
     assert post.target_name == "Java版本资讯"
-    assert len(post.pics) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.render
+@respx.mock
+async def test_news_render(mcbbsnews, dummy_user_subinfo):
+    new_post = respx.get("https://www.mcbbs.net/thread-1340927-1-1.html")
+    new_post.mock(
+        return_value=Response(
+            200, text=get_file("mcbbsnews/mock/mcbbsnews_new_post_html.html")
+        )
+    )
+    pics = await mcbbsnews._news_render(
+        "https://www.mcbbs.net/thread-1340927-1-1.html", "#post_25849603"
+    )
+    assert len(pics) == 1
+
+    pics_err_on_assert = await mcbbsnews._news_render("", "##post_25849603")
+    assert len(pics_err_on_assert) == 2
+
+    pics_err_on_other = await mcbbsnews._news_render(
+        "https://www.mcbbs.net/thread-1340927-1-1.html", "#post_err"
+    )
+    assert len(pics_err_on_other) == 2
