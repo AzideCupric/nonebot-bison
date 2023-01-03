@@ -1,5 +1,6 @@
 import re
 import time
+import traceback
 from typing import Literal
 
 from bs4 import BeautifulSoup, Tag
@@ -171,8 +172,6 @@ class McbbsNews(NewMessage):
             )
             assert pic_data
         except:
-            import traceback
-
             err_pic0 = await text_to_pic("错误发生！")
             err_pic1 = await text_to_pic(traceback.format_exc())
             return [err_pic0, err_pic1]
