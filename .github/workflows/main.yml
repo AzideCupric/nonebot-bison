@@ -1,5 +1,8 @@
 name: test-build
 
+env:
+  skip_render: ${{ contains(github.event.labels.*.name, 'test-render') }}
+
 on:
   push:
     branches:
@@ -67,12 +70,25 @@ jobs:
         run: poetry install
 
       - name: Run Pytest
+        if: !env.skip_render
         run: poetry run pytest --cov-report xml --cov=./src/plugins/nonebot_bison -k 'not compare and not render'
 
+      - name: Run Pytest with render mark
+        if: env.skip_render
+        run: poetry run pytest --cov-report xml --cov=./src/plugins/nonebot_bison -k 'not compare'
+
       - name: Upload coverage report
+        if: !env.skip_render
         uses: codecov/codecov-action@v3
         with:
           flags: smoke-test
+          env_vars: OS,PYTHON_VERSION
+      
+      - name: Upload all-test coverage report
+        if: env.skip_render
+        uses: codecov/codecov-action@v3
+        with:
+          flags: all-test
           env_vars: OS,PYTHON_VERSION
 
   docker-main:
