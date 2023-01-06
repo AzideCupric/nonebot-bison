@@ -2,9 +2,9 @@
 
 ## 最近更新
 
-### Bug 修复
-
-- 修复“订阅帐号可以被修改”的bug, 实际上不可以修改 [@felinae98](https://github.com/felinae98) ([#169](https://github.com/felinae98/nonebot-bison/pull/169))
+- merge main [@AzideCupric](https://github.com/AzideCupric) ([#3](https://github.com/AzideCupric/nonebot-bison/pull/3))
+- merge dev [@AzideCupric](https://github.com/AzideCupric) ([#2](https://github.com/AzideCupric/nonebot-bison/pull/2))
+- dev->main [@AzideCupric](https://github.com/AzideCupric) ([#1](https://github.com/AzideCupric/nonebot-bison/pull/1))
 
 ## v0.6.3
 
