@@ -4,7 +4,7 @@ sidebar: auto
 
 # 部署和使用
 
-本节将教你快速部署和使用一个 nonebot-bison，如果你不知道要选择哪种部署方式，推荐使用[docker-compose](#docker-compose部署-推荐)
+本节将教你快速部署和使用一个 nonebot-bison，如果你不知道要选择哪种部署方式，推荐使用[docker-compose](#docker-compose-部署-推荐)
 
 ## 部署
 
@@ -14,13 +14,15 @@ sidebar: auto
 
 额外提供自动同意超级用户的好友申请和同意超级用户的加群邀请的功能
 
-#### docker-compose 部署（推荐）
+#### docker-compose 部署 \[推荐\]
 
 1. 在一个新的目录中下载[docker-compose.yml](https://raw.githubusercontent.com/felinae98/nonebot-bison/main/docker-compose.yml)  
    将其中的`<your QQ>`改成自己的 QQ 号
+
    ```bash
    wget https://raw.githubusercontent.com/felinae98/nonebot-bison/main/docker-compose.yml
    ```
+
 2. 运行配置 go-cqhttp
 
    ```bash
@@ -30,7 +32,7 @@ sidebar: auto
    通信方式选择：`3: 反向 Websocket 通信`  
    编辑`bot-data/config.yml`，更改下面字段：
 
-   ```
+   ```yml
    account: # 账号相关
      uin: <QQ号> # QQ账号
      password: "<QQ密码>" # 密码为空时使用扫码登录
@@ -47,12 +49,16 @@ sidebar: auto
 
 3. 登录 go-cqhttp
    再次
+
    ```bash
    docker-compose run go-cqhttp
    ```
+
    参考[go-cqhttp 文档](https://docs.go-cqhttp.org/faq/slider.html#%E6%96%B9%E6%A1%88a-%E8%87%AA%E8%A1%8C%E6%8A%93%E5%8C%85)
    完成登录
+
 4. 确定完成登录后，启动 bot：
+
    ```bash
    docker-compose up -d
    ```
@@ -64,7 +70,7 @@ sidebar: auto
 
 #### 直接运行（不推荐）
 
-可以参考[nonebot 的运行方法](https://v2.nonebot.dev/guide/getting-started.html)
+可以参考[nonebot 的运行方法](https://docs.nonebot.dev/guide/getting-started.html)
 ::: danger
 直接克隆源代码需要自行编译前端，否则会出现无法使用管理后台等情况。
 :::
@@ -96,8 +102,9 @@ sidebar: auto
 
 ::: tip INFO
 
-- 所有配置项可参考[源文件](https://github.com/felinae98/nonebot-bison/blob/main/src/plugins/nonebot_bison/plugin_config.py)
-- **配置项的配置方法** 请参考[NoneBot 配置方式](https://v2.nonebot.dev/docs/tutorial/configuration#%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F)，在`.env`/`.env.*`文件中写入希望配置的 Bison 配置项
+- 所有可用配置项可参见[源文件](https://github.com/felinae98/nonebot-bison/blob/main/src/plugins/nonebot_bison/plugin_config.py)
+- 如果要在在 nonebot 中配置需要的**Bison 配置项**，请参考[NoneBot 配置方式](https://v2.nonebot.dev/docs/tutorial/configuration#%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F)，在`.env`/`.env.*`文件中写入希望配置的 Bison 配置项
+- 请注意，在`.env`/`.env.*`中添加的配置项 **不** 需要声明变量类型
   :::
 
 - `BISON_CONFIG_PATH`: 插件存放配置文件的位置，如果不设定默认为项目目录下的`data`目录
@@ -215,3 +222,29 @@ RSS 链接即为 uid
 
 在网易云网页上电台的链接一般为`https://music.163.com/#/djradio?id=793745436`，`id=`
 后面的数字即为 uid
+
+### 平台订阅标签（Tag）
+
+社交平台中的 Tag 一般指使用井号(`#`)作为前缀，将关键词进行标记，方便用户进行搜索的功能。  
+例子：`#明日方舟# #每日打卡#（weibo、bilibili） #baracamp（Twitter）`
+
+在 Bison 中，用户在添加平台账号订阅时（如果该平台提供有 hashtag 功能），  
+会进行`输入需要订阅/屏蔽tag`的步骤。
+
+如果需要订阅某些 tag，需要直接向 bison 发送需要订阅的一系列 tag，并使用空格进行分隔。  
+例：`A1行动预备组 罗德厨房——回甘`
+
+如果需要屏蔽某些 tag，需要在需要屏蔽的 tag 前加上前缀`~`，对于复数的 tag，使用空格进行分隔。  
+例：`~123罗德岛 ~莱茵生命漫画`
+
+可以综合运用以上规则进行同时订阅/屏蔽。  
+例：`A1行动预备组 ~123罗德岛 罗德厨房——回甘 ~莱茵生命漫画`
+
+#### Tag 的推送规则
+
+每当 Bison 抓取到一条推送，推送中的 Tag 会经过一下检查：
+
+- Bison 会对**需屏蔽 Tag**进行最优先检查，只要检测到本次推送中存在**任一**已记录的**需屏蔽 tag**，Bison 便会将该推送丢弃。
+- 上一个检查通过后，Bison 会对**需订阅 tag**进行检查，如果本次推送中存在**任一**已记录的**需订阅 tag**，Bison 便会将该推送发送到群中。
+- 当已记录的**需订阅 tag**为空时，只要通过了*第一条规则*的检查，Bison 就会将该推送发送到群中。
+- 当已记录的**需订阅 tag**不为空时，即使通过了*第一条规则*的检查，若本次推送不含**任何**已记录的**需订阅 tag**，Bison 也会将该推送丢弃。

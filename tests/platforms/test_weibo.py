@@ -4,7 +4,7 @@ from datetime import datetime
 import feedparser
 import pytest
 import respx
-from httpx import Response
+from httpx import AsyncClient, Response
 from nonebug.app import App
 from pytz import timezone
 
@@ -13,12 +13,17 @@ from .utils import get_file, get_json
 if typing.TYPE_CHECKING:
     from nonebot_bison.platform.weibo import Weibo
 
+image_cdn_router = respx.route(
+    host__regex=r"wx\d.sinaimg.cn", path__startswith="/large/"
+)
+
 
 @pytest.fixture
 def weibo(app: App):
     from nonebot_bison.platform import platform_manager
+    from nonebot_bison.utils import ProcessContext
 
-    return platform_manager["weibo"]
+    return platform_manager["weibo"](ProcessContext(), AsyncClient())
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +40,7 @@ async def test_get_name(weibo):
     profile_router.mock(
         return_value=Response(200, json=get_json("weibo_ak_profile.json"))
     )
-    name = await weibo.get_target_name("6279793937")
+    name = await weibo.get_target_name(AsyncClient(), "6279793937")
     assert name == "明日方舟Arknights"
 
 
@@ -52,6 +57,7 @@ async def test_fetch_new(weibo, dummy_user_subinfo):
     detail_router.mock(
         return_value=Response(200, text=get_file("weibo_detail_4649031014551911"))
     )
+    image_cdn_router.mock(Response(200, content=b""))
     target = "6279793937"
     res = await weibo.fetch_new_post(target, [dummy_user_subinfo])
     assert ak_list_router.called

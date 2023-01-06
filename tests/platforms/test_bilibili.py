@@ -1,10 +1,13 @@
 import typing
+from datetime import datetime
 
 import pytest
-from httpx import Response
+import respx
+from httpx import AsyncClient, Response
 from nonebug.app import App
+from pytz import timezone
 
-from .utils import get_json
+from .utils import get_file, get_json
 
 
 @pytest.fixture(scope="module")
@@ -19,8 +22,9 @@ if typing.TYPE_CHECKING:
 @pytest.fixture
 def bilibili(app: App):
     from nonebot_bison.platform import platform_manager
+    from nonebot_bison.utils import ProcessContext
 
-    return platform_manager["bilibili"]
+    return platform_manager["bilibili"](ProcessContext(), AsyncClient())
 
 
 @pytest.mark.asyncio
@@ -54,6 +58,34 @@ async def test_dynamic_forward(bilibili, bing_dy_list):
     )
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_new(bilibili, dummy_user_subinfo):
+    post_router = respx.get(
+        "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history?host_uid=161775300&offset=0&need_top=0"
+    )
+    post_router.mock(
+        return_value=Response(200, json=get_json("bilibili_strange_post-0.json"))
+    )
+    bilibili_main_page_router = respx.get("https://www.bilibili.com/")
+    bilibili_main_page_router.mock(return_value=Response(200))
+    target = "161775300"
+    res = await bilibili.fetch_new_post(target, [dummy_user_subinfo])
+    assert post_router.called
+    assert len(res) == 0
+
+    mock_data = get_json("bilibili_strange_post.json")
+    mock_data["data"]["cards"][0]["desc"]["timestamp"] = int(datetime.now().timestamp())
+    post_router.mock(return_value=Response(200, json=mock_data))
+    res2 = await bilibili.fetch_new_post(target, [dummy_user_subinfo])
+    assert len(res2[0][1]) == 1
+    post = res2[0][1][0]
+    assert (
+        post.text
+        == "#罗德厨房——回甘##明日方舟#\r\n明日方舟官方美食漫画，正式开餐。\r\n往事如烟，安然即好。\r\nMenu 01：高脚羽兽烤串与罗德岛的领袖\r\n\r\n哔哩哔哩漫画阅读：https://manga.bilibili.com/detail/mc31998?from=manga_search\r\n\r\n关注并转发本动态，我们将会在5月27日抽取10位博士赠送【兔兔奇境】周边礼盒一份。 互动抽奖"
+    )
+
+
 async def test_parse_target(bilibili: "Bilibili"):
     from nonebot_bison.platform.platform import Platform
 
@@ -69,3 +101,33 @@ async def test_parse_target(bilibili: "Bilibili"):
         await bilibili.parse_target(
             "https://www.bilibili.com/video/BV1qP4y1g738?spm_id_from=333.999.0.0"
         )
+
+
+@pytest.fixture(scope="module")
+def post_list():
+    return get_json("bilibili_fake_dy_list.json")["data"]["cards"]
+
+
+# 测试新tag机制的平台推送情况
+@pytest.mark.asyncio
+async def test_filter_user_custom(bilibili, post_list):
+
+    only_banned_tags = ["~可露希尔的秘密档案"]
+    res0 = await bilibili.filter_user_custom(post_list, [], only_banned_tags)
+    assert len(res0) == 8
+
+    only_subscribed_tags = ["可露希尔的秘密档案"]
+    res1 = await bilibili.filter_user_custom(post_list, [], only_subscribed_tags)
+    assert len(res1) == 4
+
+    multi_subs_tags_1 = ["可露希尔的秘密档案", "罗德岛相簿"]
+    res2 = await bilibili.filter_user_custom(post_list, [], multi_subs_tags_1)
+    assert len(res2) == 4
+
+    multi_subs_tags_2 = ["罗德岛相簿", "风暴瞭望"]
+    res3 = await bilibili.filter_user_custom(post_list, [], multi_subs_tags_2)
+    assert len(res3) == 4
+
+    multi_subs_tags_3 = ["明日方舟", "~饼学大厦"]
+    res4 = await bilibili.filter_user_custom(post_list, [], multi_subs_tags_3)
+    assert len(res4) == 2
