@@ -768,6 +768,24 @@ hpack = ">=4.0,<5"
 hyperframe = ">=6.0,<7"
 
 [[package]]
+name = "hishel"
+version = "0.0.14"
+description = "Persistent cache implementation for httpx and httpcore"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "hishel-0.0.14-py3-none-any.whl", hash = "sha256:546c15df9b8839c38e50a1ccb265091d0b4f45f1ae2094aa75c26db551d2da0b"},
+    {file = "hishel-0.0.14.tar.gz", hash = "sha256:0f8420160934fc2e6f6c732798c01fd59e37ab1394f08c1f4d52c9009b623faf"},
+]
+
+[package.dependencies]
+httpx = ">=0.22.0"
+
+[package.extras]
+redis = ["redis (==5.0.0)"]
+yaml = ["pyyaml (==6.0.1)"]
+
+[[package]]
 name = "hpack"
 version = "4.0.0"
 description = "Pure-Python HPACK header compression"
@@ -3095,4 +3113,4 @@ yaml = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0.0"
-content-hash = "6e4b2da6e39a8cd38823ebe14ea175ee6855cf2468f42a3677880997529a080f"
+content-hash = "022571b88accec5073382c7da9173b32461d3944c5958967a9b3cf3c2de92c0b"
