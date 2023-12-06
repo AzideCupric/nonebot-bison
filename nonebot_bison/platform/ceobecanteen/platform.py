@@ -12,7 +12,7 @@ from ...utils import SchedulerConfig
 from ...types import Target, RawPost, Category
 from .cache import CeobeClient, CeobeDataSourceCache
 from .const import COMB_ID_URL, COOKIES_URL, COOKIE_ID_URL
-from .models import CeobeCookie, CombIdResponse, CookiesResponse, CookieIdResponse
+from .models import CeobeImage, CeobeCookie, CombIdResponse, CookiesResponse, CookieIdResponse
 
 
 class CeobeCanteenSchedConf(SchedulerConfig):
@@ -160,13 +160,25 @@ class CeobeCanteen(NewMessage):
         target = await self.data_source_cache.get_by_source(raw_post.source)
         assert target, "target not found"
 
-        if raw_post.source.type.startswith("weibo"):
-            pics = await self.download_weibo_image([image.origin_url for image in raw_pics])
-        else:
-            pics = [image.origin_url for image in raw_pics]
+        pics = await self.handle_images_list(raw_pics, raw_post.source.type)
+
         timestamp = raw_post.timestamp.platform or raw_post.timestamp.fetcher
         if timestamp:
             timestamp /= 1000  # 从毫秒级转换到秒级
+
+        retweet: Post | None = None
+        if raw_post.item.is_retweeted:
+            raw_retweet_pics = raw_post.item.retweeted.images or []
+            retweet_pics = await self.handle_images_list(raw_retweet_pics, raw_post.source.type)
+
+            retweet = Post(
+                self,
+                nickname=raw_post.item.retweeted.author_name,
+                avatar=raw_post.item.retweeted.author_avatar,
+                images=list(retweet_pics),
+                content=raw_post.item.retweeted.text,
+            )
+
         return Post(
             self,
             raw_post.default_cookie.text,
@@ -176,7 +188,15 @@ class CeobeCanteen(NewMessage):
             timestamp=timestamp,
             avatar=target.avatar,
             description=target.platform,
+            repost=retweet,
         )
+
+    async def handle_images_list(self, images: list[CeobeImage], source_type: str) -> list[bytes | str]:
+        if source_type.startswith("weibo"):
+            retweet_pics = await self.download_weibo_image([image.origin_url for image in images])
+        else:
+            retweet_pics = [image.origin_url for image in images]
+        return retweet_pics
 
     async def download_weibo_image(self, image_urls: list[str]) -> list[bytes]:
         headers = {"referer": "https://weibo.cn/"}

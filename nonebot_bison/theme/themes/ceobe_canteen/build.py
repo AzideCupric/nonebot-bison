@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
 import jinja2
+from httpx import AsyncClient
 from pydantic import BaseModel, root_validator
 from nonebot_plugin_saa import Text, Image, MessageSegmentFactory
 
@@ -43,10 +44,30 @@ class CeoboContent(BaseModel):
         return values
 
 
+class CeoboRetweet(BaseModel):
+    """卡片的转发部分
+
+    author: 原作者
+    image: 图片链接
+    content: 文字内容
+    """
+
+    image: str | None
+    content: str | None
+    author: str | None
+
+    @root_validator
+    def check(cls, values):
+        if values["image"] is None and values["text"] is None:
+            raise ValueError("image and text cannot be both None")
+        return values
+
+
 class CeobeCard(BaseModel):
     info: CeobeInfo
     content: CeoboContent
     qr: str | None
+    retweet: CeoboRetweet | None
 
 
 class CeobeCanteenTheme(Theme):
@@ -70,18 +91,33 @@ class CeobeCanteenTheme(Theme):
         info = CeobeInfo(
             datasource=post.nickname, time=datetime.fromtimestamp(post.timestamp).strftime("%Y-%m-%d %H:%M:%S")
         )
-        if post.images and is_pics_mergable(post.images):
-            merged_imgs = await pic_merge(list(post.images), post.platform.client)
-            post.images = list(merged_imgs)
+
+        async def merge_pics(images: list[str | bytes] | None, client: AsyncClient) -> list[str | bytes] | None:
+            if images and is_pics_mergable(images):
+                pics = await pic_merge(list(images), client)
+                return list(pics)
+            return images
+
+        post.images = await merge_pics(post.images, post.platform.client)
         head_pic = post.images[0] if post.images else None
         if head_pic is not None and not isinstance(head_pic, str):
             head_pic = web_embed_image(head_pic)
 
         content = CeoboContent(image=head_pic, text=post.content)
+
+        retweet: CeoboRetweet | None = None
+        if post.repost:
+            post.repost.images = await merge_pics(post.repost.images, post.platform.client)
+            head_retweet_pic = post.repost.images[0] if post.repost.images else None
+            post.repost.nickname = "转发自 @" + post.repost.nickname + ":"
+            retweet = CeoboRetweet(image=head_retweet_pic, content=post.repost.content, author=post.repost.nickname)
+
+        content = CeoboRetweet(image=head_pic, text=post.content)
         return CeobeCard(
             info=info,
             content=content,
             qr=web_embed_image(convert_to_qr(post.url or "No URL", back_color=(240, 236, 233))),
+            retweet=retweet,
         )
 
     async def render(self, post: "Post") -> list[MessageSegmentFactory]:
