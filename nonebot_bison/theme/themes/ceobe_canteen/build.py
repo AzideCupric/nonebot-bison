@@ -54,12 +54,12 @@ class CeoboRetweet(BaseModel):
 
     image: str | None
     content: str | None
-    author: str | None
+    author: str
 
     @root_validator
     def check(cls, values):
-        if values["image"] is None and values["text"] is None:
-            raise ValueError("image and text cannot be both None")
+        if values["image"] is None and values["content"] is None:
+            raise ValueError("image and content cannot be both None")
         return values
 
 
@@ -112,7 +112,6 @@ class CeobeCanteenTheme(Theme):
             post.repost.nickname = "转发自 @" + post.repost.nickname + ":"
             retweet = CeoboRetweet(image=head_retweet_pic, content=post.repost.content, author=post.repost.nickname)
 
-        content = CeoboRetweet(image=head_pic, text=post.content)
         return CeobeCard(
             info=info,
             content=content,
