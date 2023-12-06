@@ -1,3 +1,4 @@
+from io import BytesIO
 from pathlib import Path
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
@@ -92,7 +93,7 @@ class CeobeCanteenTheme(Theme):
             datasource=post.nickname, time=datetime.fromtimestamp(post.timestamp).strftime("%Y-%m-%d %H:%M:%S")
         )
 
-        async def merge_pics(images: list[str | bytes] | None, client: AsyncClient) -> list[str | bytes] | None:
+        async def merge_pics(images: list[str | bytes | Path | BytesIO] | None, client: AsyncClient) -> list[str | bytes | Path | BytesIO] | None:
             if images and is_pics_mergable(images):
                 pics = await pic_merge(list(images), client)
                 return list(pics)
@@ -109,7 +110,7 @@ class CeobeCanteenTheme(Theme):
         if post.repost:
             post.repost.images = await merge_pics(post.repost.images, post.platform.client)
             head_retweet_pic = post.repost.images[0] if post.repost.images else None
-            post.repost.nickname = "转发自 @" + post.repost.nickname + ":"
+            post.repost.nickname = f"转发自 @{post.repost.nickname}:" if post.repost.nickname else None 
             retweet = CeoboRetweet(image=head_retweet_pic, content=post.repost.content, author=post.repost.nickname)
 
         return CeobeCard(
