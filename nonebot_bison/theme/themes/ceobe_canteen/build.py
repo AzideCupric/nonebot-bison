@@ -83,8 +83,8 @@ class CeobeCanteenTheme(Theme):
     template_path: Path = Path(__file__).parent / "templates"
     template_name: str = "ceobe_canteen.html.jinja"
 
-    async def parse(self, post: "Post") -> CeobeCard:
-        """解析 Post 为 CeobeCard"""
+    async def parse(self, post: "Post") -> tuple[CeobeCard, list[str | bytes | Path | BytesIO]]:
+        """解析 Post 为 CeobeCard与处理好的图片列表"""
         if not post.nickname:
             raise ThemeRenderUnsupportError("post.nickname is None")
         if not post.timestamp:
@@ -124,15 +124,18 @@ class CeobeCanteenTheme(Theme):
             repost_nickname = f"@{post.repost.nickname}:" if post.repost.nickname else ""
             retweet = CeoboRetweet(image=repost_head_pic, content=post.repost.content, author=repost_nickname)
 
-        return CeobeCard(
-            info=info,
-            content=content,
-            qr=web_embed_image(convert_to_qr(post.url or "No URL", back_color=(240, 236, 233))),
-            retweet=retweet,
+        return (
+            CeobeCard(
+                info=info,
+                content=content,
+                qr=web_embed_image(convert_to_qr(post.url or "No URL", back_color=(240, 236, 233))),
+                retweet=retweet,
+            ),
+            images,
         )
 
     async def render(self, post: "Post") -> list[MessageSegmentFactory]:
-        ceobe_card = await self.parse(post)
+        ceobe_card, merged_images = await self.parse(post)
         from nonebot_plugin_htmlrender import get_new_page
 
         template_env = jinja2.Environment(
@@ -163,6 +166,6 @@ class CeobeCanteenTheme(Theme):
         msgs.append(Text(text))
 
         if post.images:
-            msgs.extend(map(Image, post.images))
+            msgs.extend(map(Image, merged_images))
 
         return msgs
