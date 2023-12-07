@@ -167,7 +167,7 @@ class CeobeCanteen(NewMessage):
             timestamp /= 1000  # 从毫秒级转换到秒级
 
         retweet: Post | None = None
-        if raw_post.item.is_retweeted:
+        if raw_post.item.is_retweeted and raw_post.item.retweeted:
             raw_retweet_pics = raw_post.item.retweeted.images or []
             retweet_pics = await self.handle_images_list(raw_retweet_pics, raw_post.source.type)
 
@@ -191,7 +191,7 @@ class CeobeCanteen(NewMessage):
             repost=retweet,
         )
 
-    async def handle_images_list(self, images: list[CeobeImage], source_type: str) -> list[bytes | str]:
+    async def handle_images_list(self, images: list[CeobeImage], source_type: str) -> list[bytes] | list[str]:
         if source_type.startswith("weibo"):
             retweet_pics = await self.download_weibo_image([image.origin_url for image in images])
         else:

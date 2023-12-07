@@ -93,25 +93,36 @@ class CeobeCanteenTheme(Theme):
             datasource=post.nickname, time=datetime.fromtimestamp(post.timestamp).strftime("%Y-%m-%d %H:%M:%S")
         )
 
-        async def merge_pics(images: list[str | bytes | Path | BytesIO] | None, client: AsyncClient) -> list[str | bytes | Path | BytesIO] | None:
-            if images and is_pics_mergable(images):
-                pics = await pic_merge(list(images), client)
-                return list(pics)
-            return images
+        async def merge_and_extract_head_pic(
+            images: list[str | bytes | Path | BytesIO], client: AsyncClient
+        ) -> tuple[list[str | bytes | Path | BytesIO], str]:
+            if is_pics_mergable(images):
+                pics = await pic_merge(images, client)
+            else:
+                pics = images
 
-        post.images = await merge_pics(post.images, post.platform.client)
-        head_pic = post.images[0] if post.images else None
-        if head_pic is not None and not isinstance(head_pic, str):
-            head_pic = web_embed_image(head_pic)
+            head_pic = web_embed_image(pics[0]) if not isinstance(pics[0], str) else pics[0]
+
+            return list(pics), head_pic
+
+        images: list[str | bytes | Path | BytesIO] = []
+        head_pic: str | bytes | None = None
+        if post.images:
+            images, head_pic = await merge_and_extract_head_pic(post.images, post.platform.client)
 
         content = CeoboContent(image=head_pic, text=post.content)
 
         retweet: CeoboRetweet | None = None
         if post.repost:
-            post.repost.images = await merge_pics(post.repost.images, post.platform.client)
-            head_retweet_pic = post.repost.images[0] if post.repost.images else None
-            post.repost.nickname = f"转发自 @{post.repost.nickname}:" if post.repost.nickname else None 
-            retweet = CeoboRetweet(image=head_retweet_pic, content=post.repost.content, author=post.repost.nickname)
+            repost_head_pic: str | None = None
+            if post.repost.images:
+                repost_images, repost_head_pic = await merge_and_extract_head_pic(
+                    post.repost.images, post.platform.client
+                )
+                images.extend(repost_images)
+
+            repost_nickname = f"@{post.repost.nickname}:" if post.repost.nickname else ""
+            retweet = CeoboRetweet(image=repost_head_pic, content=post.repost.content, author=repost_nickname)
 
         return CeobeCard(
             info=info,
