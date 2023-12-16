@@ -2,7 +2,6 @@ from typing import cast
 from datetime import timedelta
 
 from nonebot import logger
-from hishel import AsyncCacheClient
 from expiringdictx import SimpleCache
 
 from ...post import Post
@@ -112,9 +111,6 @@ class CeobeCanteen(NewMessage):
         return cookies
 
     async def batch_get_sub_list(self, targets: list[Target]) -> list[list[CeobeCookie]]:
-        if not isinstance(self.client, AsyncCacheClient):
-            logger.warning("小刻食堂请求未使用AsyncCacheClient, 无法使用缓存，请反馈")
-
         cookies = await self.fetch_ceobe_cookies()
 
         dispatched_cookies: dict[Target, list[CeobeCookie]] = {}

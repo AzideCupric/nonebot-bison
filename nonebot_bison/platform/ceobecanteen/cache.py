@@ -4,17 +4,22 @@ from types import MappingProxyType
 from collections.abc import Callable
 
 from expiringdictx import ExpiringDict
-from hishel import Controller, AsyncCacheClient, AsyncFileStorage
+from httpx import AsyncClient, AsyncHTTPTransport
+from hishel import AsyncCacheTransport, AsyncInMemoryStorage
 
 from .const import DATASOURCE_URL
 from .utils import process_response
 from .models import CeobeSource, CeobeTarget, DataSourceResponse
 
+cache_transport = AsyncCacheTransport(
+    AsyncHTTPTransport(),
+    storage=AsyncInMemoryStorage(),
+)
+
 CeobeClient = partial(
-    AsyncCacheClient,
-    headers={"Bot": "Nonebot-Bison", "Cache-Control": "max-age=0"},
-    controller=Controller(),
-    storage=AsyncFileStorage(ttl=300),
+    AsyncClient,
+    headers={"Bot": "Nonebot-Bison"},
+    transport=cache_transport,
 )
 
 

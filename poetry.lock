@@ -769,20 +769,21 @@ hyperframe = ">=6.0,<7"
 
 [[package]]
 name = "hishel"
-version = "0.0.14"
+version = "0.0.20"
 description = "Persistent cache implementation for httpx and httpcore"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hishel-0.0.14-py3-none-any.whl", hash = "sha256:546c15df9b8839c38e50a1ccb265091d0b4f45f1ae2094aa75c26db551d2da0b"},
-    {file = "hishel-0.0.14.tar.gz", hash = "sha256:0f8420160934fc2e6f6c732798c01fd59e37ab1394f08c1f4d52c9009b623faf"},
+    {file = "hishel-0.0.20-py3-none-any.whl", hash = "sha256:a08caeb393602af7844d559fc78448c6825336368fb47136e014c4367af6b95e"},
+    {file = "hishel-0.0.20.tar.gz", hash = "sha256:74f7cfcf0a7c9ae1cf1dd5a876fc3024de281693b476c264aa41a6a8a7277265"},
 ]
 
 [package.dependencies]
 httpx = ">=0.22.0"
 
 [package.extras]
-redis = ["redis (==5.0.0)"]
+redis = ["redis (==5.0.1)"]
+sqlite = ["anysqlite (>=0.0.5)"]
 yaml = ["pyyaml (==6.0.1)"]
 
 [[package]]
@@ -3206,4 +3207,4 @@ yaml = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0.0"
-content-hash = "a33ccb52a6042a58a4b8bcdd6220272302014ef80866f020c1107f0f17b5beef"
+content-hash = "ae08d63942f3d49d0c251e2fdc016448cb0ef256d72d189d1b2502b05e66f34d"
