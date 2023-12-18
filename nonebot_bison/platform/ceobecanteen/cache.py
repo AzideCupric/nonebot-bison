@@ -3,9 +3,10 @@ from datetime import timedelta
 from types import MappingProxyType
 from collections.abc import Callable
 
+from nonebot import get_driver
 from expiringdictx import ExpiringDict
 from httpx import AsyncClient, AsyncHTTPTransport
-from hishel import AsyncCacheTransport, AsyncInMemoryStorage
+from hishel import Controller, AsyncCacheTransport, AsyncInMemoryStorage
 
 from .const import DATASOURCE_URL
 from .utils import process_response
@@ -14,11 +15,14 @@ from .models import CeobeSource, CeobeTarget, DataSourceResponse
 cache_transport = AsyncCacheTransport(
     AsyncHTTPTransport(),
     storage=AsyncInMemoryStorage(),
+    controller=Controller(
+        allow_heuristics=True,
+    ),
 )
 
 CeobeClient = partial(
     AsyncClient,
-    headers={"Bot": "Nonebot-Bison"},
+    headers={"Bot": f"Nonebot-Bison/{get_driver().config.nickname}", "User-Agent": "MountainDash/Nonebot-Bison"},
     transport=cache_transport,
 )
 

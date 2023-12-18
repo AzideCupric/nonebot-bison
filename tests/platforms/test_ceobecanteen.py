@@ -94,15 +94,23 @@ async def test_batch_fetch_new_with_single(
     from nonebot_bison.post import Post
     from nonebot_bison.types import SubUnit
 
+    mock_respone_headers = {
+        "Content-Encoding": "br",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Thu, 08 Jul 2021 14:00:00 GMT",
+        # "Date": datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT"),
+        "Vary": "origin; access-control-request-method; access-control-request-headers",
+    }
+
     targets_router = respx.get("https://server.ceobecanteen.top/api/v1/canteen/config/datasource/list")
     comb_id_router = respx.post("https://server.ceobecanteen.top/api/v1/canteen/user/getDatasourceComb")
     cookie_id_router = respx.get("http://cdn.ceobecanteen.top/datasource-comb/2")
     cookies_router = respx.get("https://server-cdn.ceobecanteen.top/api/v1/cdn/cookie/mainList/cookieList")
 
-    targets_router.mock(return_value=Response(200, json=ceobecanteen_targets))
+    targets_router.mock(return_value=Response(200, json=ceobecanteen_targets, headers=mock_respone_headers))
     comb_id_router.mock(return_value=Response(200, json=ceobecanteen_comb_id_0))
-    cookie_id_router.mock(return_value=Response(200, json=ceobecanteen_cookie_id_0))
-    cookies_router.mock(return_value=Response(200, json=ceobecanteen_cookies_0))
+    cookie_id_router.mock(return_value=Response(200, json=ceobecanteen_cookie_id_0, headers=mock_respone_headers))
+    cookies_router.mock(return_value=Response(200, json=ceobecanteen_cookies_0, headers=mock_respone_headers))
 
     assert await ceobecanteen.get_target_name(None, dummy_target) == "明日方舟-B站"
     assert await ceobecanteen.parse_target("明日方舟-B站") == dummy_target
