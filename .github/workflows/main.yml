@@ -172,7 +172,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile_with_frontend
           push: true
-          tags: felinae98/nonebot-bison:${{ env.GIT_BRANCH_NAME }}
+          tags: azide/nonebot-bison:${{ env.GIT_BRANCH_NAME }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -213,6 +213,6 @@ jobs:
           context: .
           file: ./docker/Dockerfile_with_frontend_sentry
           push: ${{ github.event_name != 'pull_request' }}
-          tags: felinae98/nonebot-bison:${{ env.GIT_BRANCH_NAME }}-sentry
+          tags: azide/nonebot-bison:${{ env.GIT_BRANCH_NAME }}-sentry
           cache-from: type=gha
           cache-to: type=gha,mode=max
